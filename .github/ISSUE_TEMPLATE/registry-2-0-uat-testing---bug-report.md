@@ -2,7 +2,7 @@
 name: Registry 2.0 UAT Testing - Bug Report
 about: For bugs that come up during UAT testing for the new Registry
 title: ''
-labels: app-development
+labels: ''
 assignees: ''
 
 ---

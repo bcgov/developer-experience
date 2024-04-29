@@ -2,8 +2,9 @@
 name: MCS Call Out Checklist
 about: Checklist for MCS On-Call when a major incident happens
 title: INC123 Something Broke
-labels: "priority/ high, *team/ ops and shared services*, *team/ DXC*, tech/automation"
+labels: priority/ high, *team/ DXC*, *team/ ops and shared services*, tech/automation
 assignees: ''
+
 ---
 
 **Describe the issue**

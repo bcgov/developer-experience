@@ -2,7 +2,7 @@
 name: Registry 2.0 UAT Testing - Accessibility
 about: For accessibility that come up during UAT testing for the new Registry
 title: ''
-labels: app-development, service-design
+labels: service-design
 assignees: ''
 
 ---

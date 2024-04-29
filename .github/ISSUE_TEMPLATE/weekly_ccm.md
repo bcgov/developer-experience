@@ -2,7 +2,7 @@
 name: Weekly CCM Release
 about: Standardize the weekly CCM push tickets
 title: Weekly CCM PROD Push for DATES
-labels: "*team/ ops and shared services*, planned/scheduled, *team/ DXC*, tech/automation"
+labels: planned/scheduled, *team/ DXC*, *team/ ops and shared services*, tech/automation
 assignees: ''
 
 ---
