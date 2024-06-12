@@ -1,0 +1,142 @@
+metadata:
+  generateName: artifactory-pipeline-
+  namespace: devops-artifactory
+spec:
+  serviceAccountName: workflow-creator
+  entrypoint: main
+  container:
+    - resources:
+        limits:
+          cpu: 100m
+          memory: 512Mi
+        requests:
+          cpu: 50m
+          memory: 256Mi
+  volumeClaimTemplates:
+    - metadata:
+        name: work
+      spec:
+        storageClassName: "netapp-block-standard"
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 64Mi
+
+  templates:
+
+    - name: main
+      steps:
+        - - name: clone
+            template: clone
+            arguments:
+              parameters:
+                - name: repo
+                  value: "https://github.com/BCDevOps/developer-experience"
+                - name: branch
+                  value: "cailey/artifactory/argo"
+        - - name: create-artifactory-is
+            template: create-artifactory-is
+        - - name: build-operator
+            template: build-operator
+
+    - name: clone
+      inputs:
+        parameters:
+          - name: repo
+          - name: branch
+      container:
+        resources:
+          limits:
+            cpu: 100m
+            memory: 512Mi
+          requests:
+            cpu: 50m
+            memory: 256Mi
+        volumeMounts:
+          - mountPath: /mnt/vol
+            name: work
+        image: alpine/git:v2.26.2
+        workingDir: /mnt/vol
+        args:
+          - clone
+          - --depth
+          - "1"
+          - --branch
+          - "{{inputs.parameters.branch}}"
+          - --single-branch
+          - "{{inputs.parameters.repo}}"
+          - .
+
+    - name: create-artifactory-is
+      container:
+        resources:
+          limits:
+            cpu: 100m
+            memory: 512Mi
+          requests:
+            cpu: 50m
+            memory: 256Mi
+        image: openshift/origin-cli:latest
+        command: [sh, -c]
+        args: ['oc apply -f /mnt/vol/apps/artifactory/artifactory-ha/templates/artifactory-image-stream.yaml']
+        volumeMounts:
+          - name: work
+            mountPath: /mnt/vol
+
+    - name: build-operator
+      container:
+        resources:
+          limits:
+            cpu: 100m
+            memory: 512Mi
+          requests:
+            cpu: 50m
+            memory: 256Mi
+        volumeMounts:
+          - name: work
+            mountPath: /mnt/vol
+        image: docker:19.03.13
+        command: [sh, -c]
+        args: ["until docker ps; do sleep 3; done; cd /mnt/vol/apps/artifactory/artifactory-operator/; ./oc-push-image.sh"]
+        env:
+          - name: DOCKER_HOST
+            value: localhost
+      sidecars:
+        - name: dind
+          image: docker:19.03.14-dind-rootless
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+#          securityContext:
+#            privileged: true
+          mirrorVolumeMounts: true
+
+
+
+
+#      container:
+#        resources:
+#          limits:
+#            cpu: 100m
+#            memory: 512Mi
+#          requests:
+#            cpu: 50m
+#            memory: 256Mi
+#        image: docker:latest
+#        command: [sh, -c]
+#        args: ['bash /mnt/vol/apps/artifactory/artifactory-operator/oc-push-image.sh']
+##        args: ['exec /mnt/vol/apps/artifactory/artifactory-operator/oc-push-image.sh -i artifactory-operator -n devops-artifactory -r image-registry.apps.klab.devops.gov.bc.ca -t v1-1.0.0-test']
+##        command: ["/mnt/vol/apps/artifactory/artifactory-operator/oc-push-image.sh"]
+##        args:
+##          - -i
+##          - artifactory-operator
+##          - -n
+##          - devops-artifactory
+##          - -r
+##          - image-registry.apps.klab.devops.gov.bc.ca
+##          - -t
+##          - v1-1.0.0-test
+#        volumeMounts:
+#          - name: work
+#            mountPath: /mnt/vol
+

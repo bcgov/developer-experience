@@ -1,0 +1,387 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: argo-template
+  annotations:
+    description: "Basic namespaced installation of Argo Workflow, requiring admin privileges on the local namespace"
+
+labels:
+  app: argo-workflow
+
+objects:
+
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: argo
+
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: argo-server
+
+- kind: ServiceAccount
+  apiVersion: v1
+  metadata:
+    name: workflow-creator
+
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    name: argo-role
+  rules:
+  - apiGroups:
+    - ""
+    resources:
+    - pods
+    - pods/exec
+    verbs:
+    - create
+    - get
+    - list
+    - watch
+    - update
+    - patch
+    - delete
+  - apiGroups:
+    - ""
+    resources:
+    - configmaps
+    verbs:
+    - get
+    - watch
+    - list
+  - apiGroups:
+    - ""
+    resources:
+    - persistentvolumeclaims
+    verbs:
+    - create
+    - delete
+  - apiGroups:
+    - argoproj.io
+    resources:
+    - workflows
+    - workflows/finalizers
+    verbs:
+    - get
+    - list
+    - watch
+    - update
+    - patch
+    - delete
+    - create
+  - apiGroups:
+    - argoproj.io
+    resources:
+    - workflowtemplates
+    - workflowtemplates/finalizers
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - ""
+    resources:
+    - serviceaccounts
+    verbs:
+    - get
+    - list
+  - apiGroups:
+    - ""
+    resources:
+    - secrets
+    verbs:
+    - get
+  - apiGroups:
+    - argoproj.io
+    resources:
+    - cronworkflows
+    - cronworkflows/finalizers
+    verbs:
+    - get
+    - list
+    - watch
+    - update
+    - patch
+    - delete
+  - apiGroups:
+    - policy
+    resources:
+    - poddisruptionbudgets
+    verbs:
+    - create
+    - get
+    - delete
+
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    name: argo-server-role
+  rules:
+  - apiGroups:
+    - ""
+    resources:
+    - configmaps
+    verbs:
+    - get
+    - watch
+    - list
+  - apiGroups:
+    - ""
+    resources:
+    - secrets
+    verbs:
+    - get
+  - apiGroups:
+    - ""
+    resources:
+    - pods
+    - pods/exec
+    - pods/log
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - ""
+    resources:
+    - pods
+    verbs:
+    - delete
+  - apiGroups:
+    - ""
+    resources:
+    - events
+    verbs:
+    - watch
+  - apiGroups:
+    - ""
+    resources:
+    - secrets
+    - serviceaccounts
+    verbs:
+    - get
+  - apiGroups:
+    - argoproj.io
+    resources:
+    - workflows
+    - workflowtemplates
+    - cronworkflows
+    - cronworkflows/finalizers
+    verbs:
+    - create
+    - get
+    - list
+    - watch
+    - update
+    - patch
+    - delete
+
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: Role
+  metadata:
+    name: workflow-creator
+  rules:
+  - verbs:
+    - get
+    - list
+    - watch
+    apiGroups:
+    - ""
+    resources:
+    - configmaps
+    - endpoints
+    - persistentvolumeclaims
+    - pods
+    - pods/log
+    - replicationcontrollers
+    - replicationcontrollers/scale
+    - secrets
+    - serviceaccounts
+    - services
+  - verbs:
+    - patch
+    - create
+    apiGroups:
+    - ""
+    resources:
+    - pods
+    - services
+    - configmaps
+    - replicationcontrollers
+    - secrets
+  - verbs:
+    - get
+    - list
+    - watch
+    - patch
+    - create
+    apiGroups:
+    - image.openshift.io
+    resources:
+    - imagestreams
+
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: argo-binding
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: Role
+    name: argo-role
+  subjects:
+  - kind: ServiceAccount
+    name: argo
+
+- apiVersion: rbac.authorization.k8s.io/v1
+  kind: RoleBinding
+  metadata:
+    name: argo-server-binding
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: Role
+    name: argo-server-role
+  subjects:
+  - kind: ServiceAccount
+    name: argo-server
+
+- kind: RoleBinding
+  apiVersion: rbac.authorization.k8s.io/v1
+  metadata:
+    name: workflow-creator
+  subjects:
+    - kind: ServiceAccount
+      name: workflow-creator
+  roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: Role
+    name: workflow-creator
+
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: workflow-controller-configmap
+  data:
+    containerRuntimeExecutor: k8sapi
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: argo-server
+  spec:
+    ports:
+    - name: web
+      port: 2746
+      targetPort: 2746
+    selector:
+      app: argo-server
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: workflow-controller-metrics
+  spec:
+    ports:
+    - name: metrics
+      port: 9090
+      protocol: TCP
+      targetPort: 9090
+    selector:
+      app: workflow-controller
+
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: argo-server
+  spec:
+    selector:
+      matchLabels:
+        app: argo-server
+    template:
+      metadata:
+        labels:
+          app: argo-server
+      spec:
+        containers:
+        - args:
+          - server
+          - --namespaced
+          image: argoproj/argocli:v2.10.0
+          name: argo-server
+          ports:
+          - containerPort: 2746
+            name: web
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 2746
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          volumeMounts:
+          - mountPath: /tmp
+            name: tmp
+        nodeSelector:
+          kubernetes.io/os: linux
+        serviceAccountName: argo-server
+        volumes:
+        - emptyDir: {}
+          name: tmp
+
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: workflow-controller
+  spec:
+    selector:
+      matchLabels:
+        app: workflow-controller
+    template:
+      metadata:
+        labels:
+          app: workflow-controller
+      spec:
+        containers:
+        - args:
+          - --configmap
+          - workflow-controller-configmap
+          - --executor-image
+          - argoproj/argoexec:v2.10.0
+          - --namespaced
+          command:
+          - workflow-controller
+          image: argoproj/workflow-controller:v2.10.0
+          name: workflow-controller
+        nodeSelector:
+          kubernetes.io/os: linux
+        serviceAccountName: argo
+
+- kind: Route
+  apiVersion: route.openshift.io/v1
+  metadata:
+    name: argo-server
+    labels:
+      app: argo-server
+  spec:
+    host: ${APP_NAME}-argo.apps.${CLUSTER}.devops.gov.bc.ca
+    to:
+      kind: Service
+      name: argo-server
+      weight: 100
+    port:
+      targetPort: web
+    tls:
+      termination: edge
+      insecureEdgeTerminationPolicy: Redirect
+    wildcardPolicy: None
+
+parameters:
+
+- name: APP_NAME
+  required: true
+
+- name: CLUSTER
+  required: true
+
+
