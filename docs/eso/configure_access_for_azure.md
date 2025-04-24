@@ -120,7 +120,7 @@ apiVersion: external-secrets.io/v1beta1
 kind: SecretStore
 metadata:
   name: azure-key-vault
-  namespace: e95e89-dev
+  namespace: abc123-dev
 spec:
   provider:
     azurekv:
