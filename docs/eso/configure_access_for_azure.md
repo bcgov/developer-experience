@@ -14,6 +14,8 @@ An Azure service principal can be created using the CLI or by logging in to the 
 https://external-secrets.io/latest/provider/azure-key-vault/
 
 ## Start the Azure CLI Container
+Azure doc: [How to run the Azure CLI in a Docker container](https://learn.microsoft.com/en-us/cli/azure/run-azure-cli-docker)
+
 We recommend that you run the Docker container for the Azure CLI, because installation of the CLI on your workstation involves a lot of package installations and updates, which could potentially cause version issues for other tools you use, and because it's a lot to install for a single task.  You are, of course, welcome to install the CLI directly on your workstation.
 
 You'll need a running Docker server or Podman machine.
@@ -37,6 +39,8 @@ To sign in, use a web browser to open the page https://microsoft.com/devicelogin
 Make a note of the subscription ID in the output of the login command.
 
 ## Create the Service Principal
+Azure doc: [Create and use a service principal](https://learn.microsoft.com/en-us/azure/openshift/howto-create-service-principal?wt.mc_id=searchAPI_azureportal_inproduct_rmskilling&sessionId=8f78b3f7c6034d3881394a4bfce6b55e&pivots=aro-azurecli)
+
 You will need
 * the subscription ID of your Azure account
 * the name of your key vault
@@ -77,6 +81,8 @@ oc apply -f secret.azure-key-vault-creds.yaml
 ```
 
 ## Assign Permissions to Service Principal
+Azure doc: [Assign a Key Vault access policy](https://learn.microsoft.com/en-us/azure/key-vault/general/assign-access-policy?tabs=azure-cli)
+
 In the Azure CLI, get a list of service principals.
 ```
 az ad sp list --show-mine
