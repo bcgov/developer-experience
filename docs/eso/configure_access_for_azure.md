@@ -1,5 +1,15 @@
 # Use Azure Key Vault with External Secrets Operator
 
+## Table of Contents
+1. [Summary](#summary)
+2. [Requirements](#requirements)
+3. [Official Documentation](#official-documentation)
+4. [Start the Azure CLI Container](#start-the-azure-cli-container)
+5. [Create the Service Principal](#create-the-service-principal)
+6. [Create the OpenShift Secret](#create-the-openshift-secret)
+7. [Assign Permissions to Service Principal](#assign-permissions-to-service-principal)
+8. [Create a SecretStore](#create-a-secretstore)
+
 ## Summary
 In order to use Azure Key Vault with the External Secrets Operator, a Service Principal must be created with the necessary permissions.  A Secret is then created in the namespaces where SecretStore and ExternalSecret resources will be created.
 
