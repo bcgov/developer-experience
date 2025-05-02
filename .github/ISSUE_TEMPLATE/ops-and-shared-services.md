@@ -18,5 +18,11 @@ What are the key components of this task?
 **Identify any dependencies**
 Internal, external, who to contact in case of absence, person to refer to for further help.
 
+**Impact of work**
+- [ ] Does training material need to be updated?
+- [ ] Does documentation need to be updated?
+- [ ] Do we need to make an announcement?
+- [ ] Does this change our supported services responsibilities?
+
 **Definition of done**
 Describe what 'complete' will look like.
