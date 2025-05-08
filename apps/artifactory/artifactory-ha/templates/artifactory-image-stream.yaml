@@ -1,0 +1,18 @@
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+metadata:
+  name: artifactory-pro
+  namespace: devops-artifactory
+spec:
+  lookupPolicy:
+    local: false
+  tags:
+    - name: 7.7.3
+      annotations: null
+      from:
+        kind: DockerImage
+        name: 'registry.connect.redhat.com/jfrog/artifactory-pro:7.7.3'
+      generation: 1
+      importPolicy: {}
+      referencePolicy:
+        type: Source
